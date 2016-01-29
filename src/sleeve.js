@@ -2,10 +2,10 @@
  * Created by David on 06/01/2016.
  */
 
-var Sleeve = function(_pointB,texture){
+var Sleeve = function(_pointB,material){
     var color = 0xff00ff;
     var self = this;
-    var r = 5;
+    var r = 20;
     var sides = 20;
     var raduisNoise = 0.2; //amount of noise relative to radius
 
@@ -22,10 +22,6 @@ var Sleeve = function(_pointB,texture){
         self.circleB = [];
         self.geometry = createGeometry();
         self.setPointB(_pointB);
-        //var material = new THREE.MeshBasicMaterial({ map:texture });
-        var material = new THREE.MeshPhongMaterial( { color: 0xffffff
-        , map: texture });
-        //var material = new THREE.MeshBasicMaterial( { color: color,wireframe: true } );
         THREE.Mesh.call( self, self.geometry, material  );
         addLine();
     }
