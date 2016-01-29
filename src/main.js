@@ -21,8 +21,11 @@ var MAX_SLEEVES = 9;
 var lastSleeve = null;
 var currentPos = new THREE.Vector3();
 var targetPos = new THREE.Vector3();
+var player;
 
-
+/**
+ * create the camera object (including lights attached to the scene)
+ */
 function addCameraAndLights() {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.up = new THREE.Vector3(0,1,0);
@@ -51,6 +54,10 @@ function addCameraAndLights() {
     scene.add(cameraContainer);
 
 }
+
+/**
+ * create the tunnel
+ */
 function addInitialSleeves() {
     //create sleeves material
     var sleeveTexture = THREE.ImageUtils.loadTexture('images/stone.jpg');
@@ -75,11 +82,13 @@ function addInitialSleeves() {
     scene.add(sleeves);
 
 }
-
+/**
+ * create the player object
+ */
 function addPlayer() {
-    var p = new Player();
-    p.position.set(0,10,0);
-    cameraContainer.add(p);
+    player = new Player();
+    player.position.set(0,20,0);
+    cameraContainer.add(player);
 }
 
 function init() {
@@ -105,7 +114,7 @@ function addSleeveToEnd(){
     var newSleeve = new Sleeve(pointB,material);
     newSleeve.connectToSleeve(lastSleeve);
     sleeves.add(newSleeve);
-    console.log(linkLength);
+    //console.log(linkLength);
     lastSleeve = newSleeve;
 }
 
@@ -115,22 +124,56 @@ function addSleeveToEnd(){
  * Start animation loop
  */
 var counter = 0;
+var cameraDrag = 0.14;
+function collisionDetection() {
+    // collision detection:
+    //   determines if any of the rays from the cube's origin to each vertex
+    //		intersects any face of a mesh in the array of target meshes
+    //   for increased collision accuracy, add more vertices to the cube;
+    //		for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
+    //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
+    var originPoint = player.position.clone();
+    for (var vertexIndex = 0; vertexIndex < player.geometry.vertices.length; vertexIndex++)
+    {
+        var localVertex = player.geometry.vertices[vertexIndex].clone();
+        var globalVertex = localVertex.applyMatrix4( player.matrix );
+        var directionVector = globalVertex.sub( player.position );
+
+        var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+
+        var collisionResults = ray.intersectObjects( sleeves.children );
+        if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
+            console.log(collisionResults);
+        }
+    }
+}
 function animate() {
 
     // note: three.js includes requestAnimationFrame shim
     requestAnimationFrame( animate );
+    player.onRenderFrame()
     //
-    counter +=0.01;
+    //counter +=0.01;
     cameraContainer.position.copy(currentPos);
     cameraContainer.position.lerp(targetPos,counter);
-    //camera.position.y = cameraContainer.position.y;
+
+    //make the camera follow player x,z axis
+    var newDelta = new THREE.Vector3();
+    newDelta.copy(camera.position);
+    newDelta.sub(player.position);
+    newDelta.multiplyScalar(cameraDrag);
+    newDelta.y = 0;
+    camera.position.sub(newDelta);
+
+    //detectCollision
+    collisionDetection();
+
     if (counter >= 1){
         counter = 0;
         addSleeveToEnd();
         currentPos.copy(targetPos);
         sleeves.remove(sleeves.children[0]);
         targetPos.add(sleeves.children[0].pointB);
-        console.log(currentPos.z,targetPos.z,counter);
     }
     renderer.render( scene, camera );
 }

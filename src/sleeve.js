@@ -5,7 +5,7 @@
 var Sleeve = function(_pointB,material){
     var color = 0xff00ff;
     var self = this;
-    var r = 20;
+    var r = 10;
     var sides = 20;
     var raduisNoise = 0.2; //amount of noise relative to radius
 
@@ -13,7 +13,7 @@ var Sleeve = function(_pointB,material){
      * Constructor
      */
     function init(){
-        console.log("new Sleeve created" );
+        //console.log("new Sleeve created" );
         //raduisNoise *= r;
 
         self.pointA = new THREE.Vector3(0,0,0);
@@ -57,7 +57,6 @@ var Sleeve = function(_pointB,material){
             delta.sub(g.vertices[i]);
             distortion = (1 - raduisNoise) + 2*(Math.random()*raduisNoise);
             delta.multiplyScalar(distortion);
-            console.log(distortion,raduisNoise);
             g.vertices[i].subVectors(delta,center);
             self.circleA.push(g.vertices[i]);
         }
