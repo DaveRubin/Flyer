@@ -1,26 +1,31 @@
 /**
  * Created by David on 06/01/2016.
  */
-var Sleeve = function(_pointB){
+
+var Sleeve = function(_pointB,texture){
     var color = 0xff00ff;
     var self = this;
-    var r = 10;
-    var sides = 10;
+    var r = 5;
+    var sides = 20;
+    var raduisNoise = 0.2; //amount of noise relative to radius
 
     /**
      * Constructor
      */
     function init(){
-        console.log("new Sleeve" ,_pointB);
+        console.log("new Sleeve created" );
+        //raduisNoise *= r;
+
         self.pointA = new THREE.Vector3(0,0,0);
         self.pointB = new THREE.Vector3(0 ,0,0);
         self.circleA = [];
         self.circleB = [];
         self.geometry = createGeometry();
         self.setPointB(_pointB);
-
-        var material = new THREE.MeshPhongMaterial( { color: 0xdddddd, specular: 0x009900, shininess: 30, shading: THREE.FlatShading } );
-        //THREE.Mesh.call( self, self.geometry, new THREE.MeshBasicMaterial( { color: color,wireframe: false } ) );
+        //var material = new THREE.MeshBasicMaterial({ map:texture });
+        var material = new THREE.MeshPhongMaterial( { color: 0xffffff
+        , map: texture });
+        //var material = new THREE.MeshBasicMaterial( { color: color,wireframe: true } );
         THREE.Mesh.call( self, self.geometry, material  );
         addLine();
     }
@@ -34,7 +39,7 @@ var Sleeve = function(_pointB){
 
         for (var i = 0; i < sides; i++) {
             var v = new THREE.Vector3(0,0,0);
-            var t = r*0.5*Math.random() + r/2;
+            var t = r-raduisNoise/2 + Math.random()*raduisNoise;
             //var t = r;
             v.x = Math.sin((i*multiplier)*toDegrees)*t;
             v.y = Math.cos((i*multiplier)*toDegrees)*t;
@@ -44,29 +49,38 @@ var Sleeve = function(_pointB){
     }
 
     function createGeometry() {
-        var g = new THREE.Geometry();
+        //25 top 25 bottom
+        var g =  new THREE.CylinderGeometry(r,r,4,sides,1,true);
 
-        self.circleA = getCircle(r,sides);
-        var i = 0;
-        for ( i = 0; i < self.circleA.length; i++) {
-            g.vertices.push(self.circleA[i]);
+        //distort top circle
+        var center = new THREE.Vector3(0,2,0);
+        var distortion = 1;
+        var delta;
+        for (var i = 0; i < sides; i++) {
+            delta = center.clone();
+            delta.sub(g.vertices[i]);
+            distortion = (1 - raduisNoise) + 2*(Math.random()*raduisNoise);
+            delta.multiplyScalar(distortion);
+            console.log(distortion,raduisNoise);
+            g.vertices[i].subVectors(delta,center);
+            self.circleA.push(g.vertices[i]);
         }
+        g.vertices[sides].copy(g.vertices[0]);
+        self.circleA.push(g.vertices[sides]);
 
-
-        self.circleB = getCircle(r,sides);
-        for ( i = 0; i < self.circleB.length; i++) {
-            g.vertices.push(self.circleB[i]);
+        //distort bottom circle
+        center.y-=4;
+        for (var i = 0; i < sides; i++) {
+            delta = center.clone();
+            delta.sub(g.vertices[sides+1+i]);
+            distortion = 1 - raduisNoise + (Math.random()*2*raduisNoise);
+            delta.multiplyScalar(distortion);
+            g.vertices[sides+1+i].addVectors(delta,center);
+            self.circleB.push(g.vertices[sides+1+i]);
         }
+        g.vertices[2*(sides+1) -1].copy(g.vertices[sides+1]);
+        self.circleB.push(g.vertices[2*(sides+1) -1]);
 
-        for ( i = 0; i < sides; i++) {
-            var i2 = (i+1)%sides;
-            //console.log(i+sides,i,i2);
-            //facing inward
-            g.faces.push( new THREE.Face3( i2,i,i+sides) );
-            g.faces.push( new THREE.Face3( i+sides,i2+sides,i2) );
-        }
-
-        g.computeBoundingSphere();
         return g;
     }
 
@@ -103,6 +117,8 @@ var Sleeve = function(_pointB){
             self.circleB[i].add(self.pointB);
         }
         self.geometry.computeBoundingSphere();
+        self.geometry.computeVertexNormals();
+        self.geometry.computeFaceNormals();
     };
 
     /**
