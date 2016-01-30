@@ -23,7 +23,7 @@ var Sleeve = function(_pointB,material){
         self.geometry = createGeometry();
         self.setPointB(_pointB);
         THREE.Mesh.call( self, self.geometry, material  );
-        addLine();
+        //addLine();
     }
 
 

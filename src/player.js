@@ -8,11 +8,15 @@ var Player = function(){
     self.colider = null;
     self.alive = true;
 
+    var BLUE = 0x66ffff;
+    var YELLOW = 0xffff66;
+    var RED = 0xff0000;
+
     var SHIELD_BASE_OPACITY = 0.3;
     var SIDE_ROTATION_SPEED = 0.1;
     var VERTICAL_ROTATION_SPEED = 0.03;
     var SPEED = 0.4;
-    var HIT_DEBOUNCE_DURATION = 1000;// in ms
+    var HIT_DEBOUNCE_DURATION = 500;// in ms
 
     var cubeSize = 2;
     var maxYRotation = Math.PI/4;
@@ -43,17 +47,31 @@ var Player = function(){
 
     }
 
-    self.hit = function(){
-        if (shieldIsON){
+    self.reset = function(){
+        console.log("reseting!!!");
+        shieldIsON = true;
+        self.position.x = 0;
+        self.position.z = 0;
+        self.colider.material.color.setHex(BLUE);
+        self.alive = true;
+        console.log(shieldIsON);
+    };
 
-            animateShield = false;
-            self.colider.material.opacity = 0;
-            setInterval(function(){
+    self.hit = function(){
+        console.log("hit on ",shieldIsON);
+        if (shieldIsON){
+            //animateShield = false;
+            self.colider.material.color.setHex(YELLOW);
+            setTimeout(function(){
+                console.log("deaa");
                 shieldIsON = false;
             },HIT_DEBOUNCE_DURATION);
             return false;
         }
-        else {
+        else if (self.alive) {
+            self.alive = false;
+            self.colider.material.opacity = SHIELD_BASE_OPACITY;
+            self.colider.material.color.setHex(RED);
             return true;
         }
     };
@@ -78,7 +96,7 @@ var Player = function(){
         //create the actual mesh
         shipObj = new THREE.Object3D();
         var g = new THREE.SphereGeometry(cubeSize,10,10);
-        var m = new THREE.MeshLambertMaterial({opacity:0.2,color:0x66ffff,transparent:true});
+        var m = new THREE.MeshLambertMaterial({opacity:0.2,color:BLUE,transparent:true});
         self.colider = new THREE.Mesh(g,m);
         self.colider.scale.set(1,1,1);
         var manager = new THREE.LoadingManager();
@@ -93,20 +111,6 @@ var Player = function(){
         self.add(shipObj);
         self.add(self.colider);
 
-        var loader = new THREE.OBJMTLLoader();
-        loader.load( 'images/Wraith Raider Starship.obj', 'images/Wraith_Raider_Starship.mtl', function ( object ) {
-
-            //change space ship rotation and position to match scene
-            object.scale.multiplyScalar(0.01);
-            object.rotation.z += Math.PI/2;
-            object.rotation.x += Math.PI/2;
-            object.rotation.y += Math.PI;
-            object.position.x -=0.5;
-            object.position.y -=1;
-            shipObj.add(object);
-
-        }, onProgress, onError );
-
         //add listeners
         self.keys = new Keys();
         self.keys.keyPressed.on("up",function(direction){
@@ -118,6 +122,18 @@ var Player = function(){
 
 
     }
+
+    self.onShipModelLoaded = function(object){
+
+            //change space ship rotation and position to match scene
+            object.scale.multiplyScalar(0.01);
+            object.rotation.z += Math.PI/2;
+            object.rotation.x += Math.PI/2;
+            object.rotation.y += Math.PI;
+            object.position.x -=0.5;
+            object.position.y -=1;
+            shipObj.add(object);
+    };
 
 
 
