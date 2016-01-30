@@ -12,7 +12,7 @@ function onLoad(){
 }
 var INITIAL_SPEED = 0.01;
 
-var flightSpeed = INITIAL_SPEED;
+var flightSpeed = 0;
 var alive = true;
 
 //static texture
@@ -31,14 +31,10 @@ var currentPos = new THREE.Vector3();
 var targetPos = new THREE.Vector3();
 var player;
 
-document.addEventListener("keydown", onKeyDown, false);
 
-function onKeyDown(e){
-    if (!alive) {
-        restart();
-    }
-}
-
+function showMenu(){
+    $(".menu").show();
+};
 
 function positionCamera() {
     camera.position.set(0,0,0);
@@ -175,6 +171,7 @@ function restart(){
     spikes = new THREE.Object3D();
     createInitialSleeves();
     startGame();
+
 }
 
 /**
@@ -185,7 +182,7 @@ function loadShipModel() {
     var loader = new THREE.OBJMTLLoader();
     loader.load( 'images/Wraith Raider Starship.obj', 'images/Wraith_Raider_Starship.mtl', function ( object ) {
         player.onShipModelLoaded(object);
-        startGame();
+        $(".play-button").text("Play");
     }, onProgress, onError );
 }
 
@@ -221,8 +218,15 @@ function init() {
     scene.add(spikes);
     addPlayer();
     loadShipModel();
-
-
+    $(".restart-button").hide();
+    $(".play-button").click(function() {
+        startGame();
+        $(".menu").hide();
+    });
+    $(".restart-button").click(function() {
+        restart();
+        $(".menu").hide();
+    });
 }
 
 function addSleeveToEnd(addSpike){
@@ -288,7 +292,7 @@ function animate() {
 
         if (counter >= 1){
             counter = 0;
-            addSleeveToEnd();
+            addSleeveToEnd(true);
             currentPos.copy(targetPos);
             //save object for deletion
             var tmpSleeve = sleeves.children[0];
@@ -320,6 +324,12 @@ function shiftTunnle(){
 }
 
 
+function showRestartMenu() {
+    $(".menu").show();
+    $(".play-button").hide();
+    $(".restart-button").show();
+}
+
 function onCollision(target) {
     console.log("collided");
     var dead = player.hit();
@@ -328,6 +338,8 @@ function onCollision(target) {
         flightSpeed = 0;
         alive = false;
         console.log("GameOver",target);
+        showRestartMenu();
+
 
     }
 }
@@ -390,6 +402,7 @@ function collideSpikesDetection() {
         for (var j = 0; j < checkSpikes.length; j++) {
             //var obj = player[i];
             var spike = checkSpikes[j];
+            if (spike == undefined)return;//ugly patch
             spike.updateMatrixWorld();
             spike.colliderMesh.updateMatrixWorld();
 

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title></title>
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
-    <script src="src/THREEx.KeyboardState.js"></script>
     <script src="node_modules/three/three.min.js"></script>
     <script src="loaders/DDSLoader.js"></script>
     <script src="loaders/MTLLoader.js"></script>
@@ -22,10 +21,50 @@
             margin: 0;
             overflow: hidden;
         }
+        .menu {
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
+            position: absolute;
+            top: calc(50% - 100px);
+            left: calc(50% - 100px);
+            text-align: center;
+            height: 200px;
+            width: 200px;
+        }
+
+        .play-button ,.restart-button{
+            cursor: pointer;
+            background: red;
+            color: white;
+            position: relative;
+            width: 100px;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 5px;
+            border-color: white;
+            border-width: 5px;
+            border-style: double;
+            left: 45px;
+            top: 65px;
+        }
+
+        .play-button:hover ,.restart-button:hover{
+            background: #b70009;
+        }
+
 
 
     </style>
 </head>
 <body onload="onLoad()">
+    <div class="menu">
+        arrows to play
+        <div class="play-button">
+            Loading...
+        </div>
+        <div class="restart-button">
+            Restart
+        </div>
+    </div>
 </body>
 </html>
