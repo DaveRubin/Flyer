@@ -10,6 +10,11 @@ function onLoad(){
     init();
     animate();
 }
+var INITIAL_SPEED = 0.01;
+
+var flightSpeed = INITIAL_SPEED;
+var alive = true;
+
 //static texture
 var material;
 
@@ -125,54 +130,39 @@ function addSleeveToEnd(){
  */
 var counter = 0;
 var cameraDrag = 0.14;
-function collisionDetection() {
-    // collision detection:
-    //   determines if any of the rays from the cube's origin to each vertex
-    //		intersects any face of a mesh in the array of target meshes
-    //   for increased collision accuracy, add more vertices to the cube;
-    //		for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
-    //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
-    var originPoint = player.position.clone();
-    for (var vertexIndex = 0; vertexIndex < player.geometry.vertices.length; vertexIndex++)
-    {
-        var localVertex = player.geometry.vertices[vertexIndex].clone();
-        var globalVertex = localVertex.applyMatrix4( player.matrix );
-        var directionVector = globalVertex.sub( player.position );
-
-        var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
-
-        var collisionResults = ray.intersectObjects( sleeves.children );
-        if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
-            console.log(collisionResults);
-        }
-    }
-}
 function animate() {
 
     // note: three.js includes requestAnimationFrame shim
     requestAnimationFrame( animate );
-    player.onRenderFrame()
+    player.onRenderFrame();
     //
-    //counter +=0.01;
+    counter +=flightSpeed;
     cameraContainer.position.copy(currentPos);
     cameraContainer.position.lerp(targetPos,counter);
-
     //make the camera follow player x,z axis
     var newDelta = new THREE.Vector3();
+
     newDelta.copy(camera.position);
     newDelta.sub(player.position);
     newDelta.multiplyScalar(cameraDrag);
     newDelta.y = 0;
     camera.position.sub(newDelta);
+    if (!alive) return;
 
-    //detectCollision
-    collisionDetection();
+    //check collision from the
+    distanceDetection();
+    collisionDetection(sleeves.children[0]);
 
     if (counter >= 1){
         counter = 0;
         addSleeveToEnd();
         currentPos.copy(targetPos);
-        sleeves.remove(sleeves.children[0]);
+        //save object for deletion
+        var tmp = sleeves.children[0];
+        sleeves.remove(tmp);
+        //once removed from render list, delete object
+        delete tmp;
+        //we'll update the new target position for main camera path
         targetPos.add(sleeves.children[0].pointB);
     }
     renderer.render( scene, camera );
@@ -184,4 +174,54 @@ function animate() {
 function shiftTunnle(){
     sleeves.remove(sleeves.children[0]);
     addSleeveToEnd();
+}
+
+
+function onCollision() {
+    var dead = player.hit();
+    if (dead) {
+        flightSpeed = 0;
+        alive = false;
+        player.alive = false;
+        console.log("GameOver");
+    }
+}
+/**
+ * check player distance from path
+ */
+function distanceDetection() {
+    if (player.position.length()>22)
+        onCollision();
+}
+/**
+ * Collision detection
+ * altered code from
+ * http://stemkoski.github.io/Three.js/Collision-Detection.html
+ *
+ * @param collidableMesh
+ */
+function collisionDetection(collidableMesh) {
+    // collision detection:
+    //   determines if any of the rays from the cube's origin to each vertex
+    //		intersects any face of a mesh in the array of target meshes
+    //   for increased collision accuracy, add more vertices to the cube;
+    //		for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
+    //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
+    var colider = player.colider;
+    var originPoint = player.position.clone();
+    originPoint.add(cameraContainer.position);
+    for (var vertexIndex = 0; vertexIndex < colider.geometry.vertices.length; vertexIndex++)
+    {
+        var localVertex = colider.geometry.vertices[vertexIndex].clone();
+        var globalVertex = localVertex.applyMatrix4( cameraContainer.matrix );
+        var directionVector = localVertex.sub( cameraContainer.position );
+
+        var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+
+        var collisionResults = ray.intersectObject( collidableMesh );
+        if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
+            console.log(collisionResults);
+            onCollision();
+        }
+    }
 }
