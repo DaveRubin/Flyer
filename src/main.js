@@ -180,7 +180,7 @@ function restart(){
 function loadShipModel() {
 
     var loader = new THREE.OBJMTLLoader();
-    loader.load( 'images/Wraith Raider Starship.obj', 'images/Wraith_Raider_Starship.mtl', function ( object ) {
+    loader.load( 'images/Wraith_Raider_Starship.obj', 'images/Wraith_Raider_Starship.mtl', function ( object ) {
         player.onShipModelLoaded(object);
         $(".play-button").text("Play");
     }, onProgress, onError );
